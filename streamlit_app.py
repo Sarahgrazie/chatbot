@@ -29,7 +29,11 @@ if openai_api_key:
 
     # 감정 상태 저장을 위한 세션 상태 초기화 (주관적인 피드백 활용)
     if "mood_level" not in st.session_state:
-        st.session_state.mood_level = 3  # 초기 감정 수준 (1-5)
+        st.session_state.mood_level = 2.5  # 초기 기분 수준 (0.0 - 5.0)
+
+    # 답변 창의성 저장을 위한 세션 상태 초기화
+    if "creativity" not in st.session_state:
+        st.session_state.creativity = 0.7  # 초기 창의성 (0.0 - 2.0)
 
     # 채팅 메시지 저장을 위한 세션 상태 초기화
     if "messages" not in st.session_state:
@@ -41,7 +45,22 @@ if openai_api_key:
             st.markdown(message["content"])
 
     st.sidebar.title("카르디아 설정")
-    mood_display = st.sidebar.empty() # 감정 수준 표시를 위한 공간
+
+    # 답변의 창의성 조절 슬라이더
+    st.sidebar.subheader("답변의 창의성 (0.0: 낮음, 2.0: 높음)")
+    st.session_state.creativity = st.sidebar.slider(
+        "창의성 수준:", min_value=0.0, max_value=2.0, value=st.session_state.creativity, step=0.1
+    )
+    st.sidebar.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
+
+    # 사용자 기분 수준 입력 슬라이더
+    st.sidebar.subheader("현재 기분 수준 (0.0: 매우 침울, 5.0: 매우 활기)")
+    st.session_state.mood_level = st.sidebar.slider(
+        "기분 수준:", min_value=0.0, max_value=5.0, value=st.session_state.mood_level, step=0.1
+    )
+    st.sidebar.caption("이 기분 수준은 챗봇의 응답 방식에 영향을 줄 수 있습니다.")
+
+    mood_display = st.sidebar.empty() # 기분 수준 표시를 위한 공간
 
     # 사용자 입력 필드를 생성합니다.
     if prompt := st.chat_input("당신의 이야기를 들려주세요"):
@@ -50,8 +69,8 @@ if openai_api_key:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # 현재 감정 수준에 따라 temperature 조절 (간접적인 영향)
-        temperature = (st.session_state.mood_level - 1) * 0.4 + 0.2 # 1->0.2, 3->1.0, 5->1.8
+        # 답변 생성 시 temperature 값 결정: 창의성 슬라이더 값 사용 (기분 수준은 다른 방식으로 활용 가능)
+        temperature = st.session_state.creativity
 
         try:
             stream = client.chat.completions.create(
@@ -67,31 +86,17 @@ if openai_api_key:
                 response = st.write_stream(stream)
             st.session_state.messages.append({"role": "assistant", "content": response})
 
-            # 답변 후 감정 상태 업데이트를 위한 UI 표시 (주관적인 피드백)
-            st.sidebar.subheader("오늘 기분은 어떠신가요?")
-            col1, col2, col3, col4, col5 = st.sidebar.columns(5)
-            if col1.button("😔"):
-                st.session_state.mood_level = 1
-            if col2.button("🙁"):
-                st.session_state.mood_level = 2
-            if col3.button("😐"):
-                st.session_state.mood_level = 3
-            if col4.button("😊"):
-                st.session_state.mood_level = 4
-            if col5.button("😄"):
-                st.session_state.mood_level = 5
-
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
 
-    mood_display.markdown(f"**현재 감정 수준:** {st.session_state.mood_level} / 5 (주관적인 피드백)")
+    mood_display.markdown(f"**현재 기분 수준:** {st.session_state.mood_level:.1f} / 5.0 (주관적인 피드백)")
 
 else:
     st.warning("OpenAI API 키를 입력해야 서비스를 이용할 수 있습니다.")
 
 st.markdown(
     """
-    **Disclaimer:** 카르디아는 AI 챗봇이며, 정신 건강 전문가가 아닙니다. 
+    **Disclaimer:** 카르디아는 AI 챗봇이며, 정신 건강 전문가가 아닙니다.
     만약 심리적인 어려움을 느끼신다면 전문가의 도움을 받는 것을 권장드립니다.
     """
 )
