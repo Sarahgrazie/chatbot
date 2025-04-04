@@ -32,8 +32,8 @@ if openai_api_key:
         st.session_state.mood_level = 2.5  # 초기 기분 수준 (0.0 - 5.0)
 
     # 답변 창의성 저장을 위한 세션 상태 초기화
-    if "creativity" not in st.session_state:
-        st.session_state.creativity = 0.7  # 초기 창의성 (0.0 - 2.0)
+    if "creativity_level" not in st.session_state:
+        st.session_state.creativity_level = 3  # 초기 창의성 수준 (1 - 5)
 
     # 채팅 메시지 저장을 위한 세션 상태 초기화
     if "messages" not in st.session_state:
@@ -46,14 +46,14 @@ if openai_api_key:
 
     st.sidebar.title("카르디아 설정")
 
-    # 답변의 창의성 조절 슬라이더
-    st.sidebar.subheader("답변의 창의성 (0.0: 낮음, 2.0: 높음)")
-    st.session_state.creativity = st.sidebar.slider(
-        "창의성 수준:", min_value=0.0, max_value=2.0, value=st.session_state.creativity, step=0.1
+    # 답변의 창의성 수준 조절 슬라이더 (1 - 5)
+    st.sidebar.subheader("답변의 창의성 수준 (1: 낮음, 5: 높음)")
+    st.session_state.creativity_level = st.sidebar.slider(
+        "창의성 수준:", min_value=1, max_value=5, value=st.session_state.creativity_level, step=1
     )
-    st.sidebar.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
+    st.sidebar.caption("1에 가까울수록 정확하고 예측 가능한 답변, 5에 가까울수록 창의적이고 다양한 답변을 생성합니다.")
 
-    # 사용자 기분 수준 입력 슬라이더
+    # 사용자 기분 수준 입력 슬라이더 (0.0 - 5.0)
     st.sidebar.subheader("현재 기분 수준 (0.0: 매우 침울, 5.0: 매우 활기)")
     st.session_state.mood_level = st.sidebar.slider(
         "기분 수준:", min_value=0.0, max_value=5.0, value=st.session_state.mood_level, step=0.1
@@ -69,8 +69,8 @@ if openai_api_key:
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # 답변 생성 시 temperature 값 결정: 창의성 슬라이더 값 사용 (기분 수준은 다른 방식으로 활용 가능)
-        temperature = st.session_state.creativity
+        # 답변 생성 시 temperature 값 결정: 창의성 슬라이더 값 (1-5)을 0.0-2.0 범위로 변환
+        temperature = (st.session_state.creativity_level - 1) * 0.5
 
         try:
             stream = client.chat.completions.create(
