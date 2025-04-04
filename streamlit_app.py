@@ -27,7 +27,7 @@ openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="pa
 temperature = st.slider(
     "우울즤 정도: ", min_value=0.0, max_value=5.0, value=0.3, step=1.0
 )
-st.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
+st.caption("낮은 값은 우울감이 적다는 답변을, 높은 값은 우울감이 더 크다는 답변을 생성합니다.")
 
 if openai_api_key:
     # OpenAI 클라이언트 초기화
