@@ -25,7 +25,7 @@ openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="pa
 
 # temperature 슬라이더를 추가합니다.
 temperature = st.slider(
-    "답변의 창의성 (Temperature):", min_value=0.0, max_value=2.0, value=0.7, step=0.1
+    "우울즤 정도: ", min_value=0.0, max_value=5.0, value=0.3, step=1.0
 )
 st.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
 
