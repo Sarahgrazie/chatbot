@@ -2,16 +2,16 @@ import streamlit as st
 from openai import OpenAI
 
 # 페이지 제목과 설명을 설정합니다.
-st.title("✈️ K의 스마트 여행 가이드")
+st.title("❤️ 카르디아: 당신의 마음을 보듬는 대화")
 st.markdown(
     """
-    AI 기반의 맞춤형 여행 가이드 서비스입니다. 
-    OpenAI의 GPT-3.5 모델을 활용하여 여행 계획, 정보 검색 등 다양한 도움을 드립니다.
+    따뜻한 마음으로 당신의 이야기에 귀 기울이는 AI 챗봇, 카르디아입니다.
+    최첨단 OpenAI GPT-3.5 모델을 기반으로 편안하고 깊이 있는 대화를 나눌 수 있도록 돕습니다.
     """
 )
 st.markdown(
     """
-    **사용 방법:** OpenAI API 키를 입력하고, 궁금한 여행 관련 질문을 입력하세요.
+    **사용 방법:** OpenAI API 키를 입력하고, 편안하게 당신의 마음을 이야기해주세요.
     """
 )
 st.markdown(
@@ -43,7 +43,7 @@ if openai_api_key:
             st.markdown(message["content"])
 
     # 사용자 입력 필드를 생성합니다.
-    if prompt := st.chat_input("여행에 대해 궁금한 점을 물어보세요"):
+    if prompt := st.chat_input("당신의 이야기를 들려주세요"):
         # 사용자 메시지를 세션 상태에 추가하고 화면에 표시합니다.
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
