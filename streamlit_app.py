@@ -2,7 +2,7 @@ import streamlit as st
 from openai import OpenAI
 
 # 페이지 제목과 설명을 설정합니다.
-st.title("엘피다: 당신의 마음을 보듬는 대화")
+st.title("☀️엘피다: 당신의 마음을 보듬는 대화")
 st.markdown(
     """
     따뜻한 마음으로 당신의 이야기에 귀 기울이는 AI 챗봇, 카르디아입니다.
