@@ -14,11 +14,6 @@ st.markdown(
     **사용 방법:** OpenAI API 키를 입력하고, 편안하게 당신의 마음을 이야기해주세요.
     """
 )
-st.markdown(
-    """
-    [OpenAI API 키 발급받기](https://platform.openai.com/account/api-keys)
-    """
-)
 
 # OpenAI API 키 입력 필드를 생성합니다.
 openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="password")
