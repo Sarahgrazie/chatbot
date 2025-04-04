@@ -24,16 +24,10 @@ st.markdown(
 openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="password")
 
 # temperature 슬라이더를 추가합니다.
-temperature = st.slider(
-    "답변의 창의성 (Temperature):", min_value=0.0, max_value=2.0, value=0.7, step=0.1
+depression_level = st.slider(
+    "우울감 정도 (0: 낮음, 5: 높음):", min_value=0.0, max_value=5.0, value=0.3, step=0.1
 )
-st.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
-
-# [선택 사항] 사용자 기분 수준 입력 슬라이더
-mood_level = st.sidebar.slider(
-    "현재 기분 수준 (1: 매우 안 좋음, 5: 매우 좋음):", min_value=1, max_value=5, value=3, step=1
-)
-st.sidebar.caption("이 기분 수준은 챗봇과의 대화에 영향을 줄 수 있습니다.")
+st.caption("0에 가까울수록 챗봇이 차분하고 조용한 어조로, 5에 가까울수록 다소 감성적이고 다양한 어조로 응답할 수 있습니다.")
 
 if openai_api_key:
     # OpenAI 클라이언트 초기화
@@ -56,6 +50,9 @@ if openai_api_key:
             st.markdown(prompt)
 
         # OpenAI API를 호출하여 답변을 생성합니다. temperature 파라미터를 사용합니다.
+        # 우울감 정도를 temperature 값으로 직접 사용 (사용자 경험을 위한 표현)
+        temperature = depression_level * 0.4  # 0 -> 0.0, 5 -> 2.0 으로 스케일링
+
         try:
             stream = client.chat.completions.create(
                 model="gpt-3.5-turbo",
