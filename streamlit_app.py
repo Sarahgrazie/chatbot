@@ -25,9 +25,15 @@ openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="pa
 
 # temperature 슬라이더를 추가합니다.
 temperature = st.slider(
-    "우울즤 정도: ", min_value=0.0, max_value=5.0, value=0.3, step=1.0
+    "답변의 창의성 (Temperature):", min_value=0.0, max_value=2.0, value=0.7, step=0.1
 )
-st.caption("낮은 값은 우울감이 적다는 답변을, 높은 값은 우울감이 더 크다는 답변을 생성합니다.")
+st.caption("낮은 값은 더 정확하고 예측 가능한 답변을, 높은 값은 더 창의적이고 무작위적인 답변을 생성합니다.")
+
+# [선택 사항] 사용자 기분 수준 입력 슬라이더
+mood_level = st.sidebar.slider(
+    "현재 기분 수준 (1: 매우 안 좋음, 5: 매우 좋음):", min_value=1, max_value=5, value=3, step=1
+)
+st.sidebar.caption("이 기분 수준은 챗봇과의 대화에 영향을 줄 수 있습니다.")
 
 if openai_api_key:
     # OpenAI 클라이언트 초기화
@@ -70,3 +76,10 @@ if openai_api_key:
             st.error(f"오류가 발생했습니다: {e}")
 else:
     st.warning("OpenAI API 키를 입력해야 서비스를 이용할 수 있습니다.")
+
+st.markdown(
+    """
+    **Disclaimer:** 카르디아는 AI 챗봇이며, 정신 건강 전문가가 아닙니다.
+    만약 심리적인 어려움을 느끼신다면 전문가의 도움을 받는 것을 권장드립니다.
+    """
+)
