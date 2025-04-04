@@ -20,7 +20,7 @@ openai_api_key = st.text_input("OpenAI API 키를 입력해주세요:", type="pa
 
 # temperature 슬라이더를 추가합니다.
 depression_level = st.slider(
-    "우울감 정도 (0: 낮음, 5: 높음):", min_value=0.0, max_value=5.0, value=0.3, step=0.1
+    "우울감 정도 (0: 낮음, 5: 높음):", min_value=0.0, max_value=5.0, value=3., step=1.0
 )
 st.caption("0에 가까울수록 챗봇이 차분하고 조용한 어조로, 5에 가까울수록 다소 감성적이고 다양한 어조로 응답할 수 있습니다.")
 
