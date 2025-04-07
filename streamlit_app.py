@@ -21,12 +21,16 @@ age_group = st.selectbox("연령대:", ["10대", "20대", "30대", "40대", "50�
 location = st.selectbox("지역:", ["서울", "경기", "인천", "강원", "충청", "전라", "경상", "제주", "기타"])
 
 st.subheader("상담 예약을 원하시면 아래 정보를 선택해주세요.")
-preferred_day = st.selectbox("원하는 요일을 선택해주세요:", ["월요일", "화요일", "수요일", "목요일", "금요일"])
+preferred_day = st.selectbox("원하는 요일을 선택해주세요:", ["선택 안 함", "월요일", "화요일", "수요일", "목요일", "금요일"])
 preferred_time = st.selectbox(
     "원하는 시간을 선택해주세요 (오전 10시 - 오후 5시, 점심시간 12시-1시 제외):",
     ["선택 안 함", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"]
 )
 st.info(f"상담 비용은 1회에 5만원입니다.")
+
+# 선택된 예약 정보 표시
+if preferred_day != "선택 안 함" and preferred_time != "선택 안 함":
+    st.info(f"선택하신 예약 요일: {preferred_day}, 시간: {preferred_time}")
 
 # 상담 예약 정보 저장 (예시)
 if "booking_info" not in st.session_state:
@@ -35,8 +39,6 @@ if "booking_info" not in st.session_state:
 if preferred_day != "선택 안 함" and preferred_time != "선택 안 함":
     st.session_state.booking_info["day"] = preferred_day
     st.session_state.booking_info["time"] = preferred_time
-    st.success(f"선택하신 예약 정보: {st.session_state.booking_info['day']} {st.session_state.booking_info['time']}")
-    st.info("예약 확정을 원하시면 챗봇에 '예약 확정'이라고 입력해주세요.")
 
 # ---------------------
 # 💬 챗봇 대화 영역
@@ -71,7 +73,7 @@ if prompt := st.chat_input("힘든 마음을 이야기하거나 상담 예약을
         st.markdown(prompt)
 
     # 예약 확정 처리 (간단한 예시)
-    if "예약 확정" in prompt and st.session_state.booking_info["day"] and st.session_state.booking_info["time"]:
+    if "예약 확정" in prompt and st.session_state.booking_info.get("day") and st.session_state.booking_info.get("time"):
         st.success(f"{st.session_state.booking_info['day']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
     else:
         stream = client.chat.completions.create(
