@@ -33,11 +33,10 @@ preferred_time = st.selectbox(
 )
 st.info(f"상담 비용은 1회에 5만원입니다.")
 
-# 선택된 예약 정보 표시
-if preferred_date:
-    st.info(f"선택하신 예약 날짜: {preferred_date.strftime('%Y-%m-%d')}")
-if preferred_time != "선택 안 함":
-    st.info(f"선택하신 예약 시간: {preferred_time}")
+# 선택된 예약 정보 표시 및 예약 확정
+if preferred_date and preferred_time != "선택 안 함":
+    st.info(f"선택하신 예약 날짜: {preferred_date.strftime('%Y-%m-%d')}, 시간: {preferred_time}")
+    st.success(f"{preferred_date.strftime('%Y-%m-%d')} {preferred_time}에 상담 예약이 확정되었습니다.")
 
 # 상담 예약 정보 저장 (예시)
 if "booking_info" not in st.session_state:
@@ -59,7 +58,7 @@ if "messages" not in st.session_state:
                 f"너는 사용자의 정신 건강을 지지하고 돕는 친절한 챗봇이야. 사용자는 {gender}, {age_group}, {location}에 거주하고 있어. "
                 "사용자의 감정에 공감하고 이해하며, 필요에 따라 정신 건강 관련 정보나 상담 연락처를 제공해줄 수 있어. "
                 "사용자가 상담 예약을 원하면, 원하는 날짜와 시간, 상담 비용을 안내해야 해. "
-                "상담 가능 시간은 평일 오전 10시부터 오후 5시까지이며, 점심시간은 12시부터 1시야. "
+                "상담 가능 시간은 평일 오전 10시부터 오후 5시이며, 점심시간은 12시부터 1시야. "
                 "상담 요일은 월요일부터 금요일까지 가능해. "
                 "상담 비용은 1회에 5만원이야. "
                 "사용자가 힘든 감정을 이야기하면 따뜻하게 위로해주고, 긍정적인 관점을 가질 수 있도록 격려해줘. "
@@ -93,10 +92,6 @@ if prompt := st.chat_input("힘든 마음을 이야기하거나 상담 예약을
         with st.chat_message("assistant"):
             response = st.write_stream(stream)
         st.session_state.messages.append({"role": "assistant", "content": response})
-
-        # 예약 확정 처리 (간단한 예시)
-        if "예약 확정" in prompt and st.session_state.booking_info.get("date") and st.session_state.booking_info.get("time"):
-            st.success(f"{st.session_state.booking_info['date']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
 
     except Exception as e:
         st.error(f"챗봇 응답 중 오류가 발생했습니다: {e}")
