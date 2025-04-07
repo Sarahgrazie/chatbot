@@ -1,6 +1,6 @@
 import streamlit as st
 from openai import OpenAI
-from datetime import time
+from datetime import time, date
 
 st.title("마음 건강 챗봇 🌿")
 st.write("당신의 마음 건강을 위한 편안한 대화 공간입니다.")
@@ -21,7 +21,7 @@ age_group = st.selectbox("연령대:", ["10대", "20대", "30대", "40대", "50�
 location = st.selectbox("지역:", ["서울", "경기", "인천", "강원", "충청", "전라", "경상", "제주", "기타"])
 
 st.subheader("상담 예약을 원하시면 아래 정보를 선택해주세요.")
-preferred_day = st.selectbox("원하는 요일을 선택해주세요:", ["선택 안 함", "월요일", "화요일", "수요일", "목요일", "금요일"])
+preferred_date = st.date_input("원하는 날짜를 선택해주세요:", min_value=date.today()) # 오늘 이후 날짜만 선택 가능하도록 설정
 preferred_time = st.selectbox(
     "원하는 시간을 선택해주세요 (오전 10시 - 오후 5시, 점심시간 12시-1시 제외):",
     ["선택 안 함", "10:00", "10:30", "11:00", "11:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30"]
@@ -29,15 +29,15 @@ preferred_time = st.selectbox(
 st.info(f"상담 비용은 1회에 5만원입니다.")
 
 # 선택된 예약 정보 표시
-if preferred_day != "선택 안 함" and preferred_time != "선택 안 함":
-    st.info(f"선택하신 예약 요일: {preferred_day}, 시간: {preferred_time}")
+if preferred_date and preferred_time != "선택 안 함":
+    st.info(f"선택하신 예약 날짜: {preferred_date.strftime('%Y-%m-%d')}, 시간: {preferred_time}")
 
 # 상담 예약 정보 저장 (예시)
 if "booking_info" not in st.session_state:
-    st.session_state.booking_info = {"day": None, "time": None}
+    st.session_state.booking_info = {"date": None, "time": None}
 
-if preferred_day != "선택 안 함" and preferred_time != "선택 안 함":
-    st.session_state.booking_info["day"] = preferred_day
+if preferred_date and preferred_time != "선택 안 함":
+    st.session_state.booking_info["date"] = preferred_date.strftime('%Y-%m-%d')
     st.session_state.booking_info["time"] = preferred_time
 
 # ---------------------
@@ -50,7 +50,7 @@ if "messages" not in st.session_state:
             "content": (
                 f"너는 사용자의 정신 건강을 지지하고 돕는 친절한 챗봇이야. 사용자는 {gender}, {age_group}, {location}에 거주하고 있어. "
                 "사용자의 감정에 공감하고 이해하며, 필요에 따라 정신 건강 관련 정보나 상담 연락처를 제공해줄 수 있어. "
-                "사용자가 상담 예약을 원하면, 원하는 시간, 요일, 상담 비용을 안내해야 해. "
+                "사용자가 상담 예약을 원하면, 원하는 날짜와 시간, 상담 비용을 안내해야 해. "
                 "상담 가능 시간은 평일 오전 10시부터 오후 5시까지이며, 점심시간은 12시부터 1시까지야. "
                 "상담 요일은 월요일부터 금요일까지 가능해. "
                 "상담 비용은 1회에 5만원이야. "
@@ -73,8 +73,8 @@ if prompt := st.chat_input("힘든 마음을 이야기하거나 상담 예약을
         st.markdown(prompt)
 
     # 예약 확정 처리 (간단한 예시)
-    if "예약 확정" in prompt and st.session_state.booking_info.get("day") and st.session_state.booking_info.get("time"):
-        st.success(f"{st.session_state.booking_info['day']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
+    if "예약 확정" in prompt and st.session_state.booking_info.get("date") and st.session_state.booking_info.get("time"):
+        st.success(f"{st.session_state.booking_info['date']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
     else:
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
