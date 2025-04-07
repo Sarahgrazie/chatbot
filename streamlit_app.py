@@ -13,13 +13,16 @@ else:
     client = OpenAI(api_key=openai_api_key)
 
 # ---------------------
-# 👤 기본 인적 사항 입력 및 상담 예약
+# 👤 기본 인적 사항 입력
 # ---------------------
 st.subheader("기본 정보를 알려주세요.")
 gender = st.radio("성별:", ["남자", "여자", "기타"])
 age_group = st.selectbox("연령대:", ["10대", "20대", "30대", "40대", "50대 이상"])
 location = st.selectbox("지역:", ["서울", "경기", "인천", "강원", "충청", "전라", "경상", "제주", "기타"])
 
+# ---------------------
+# 📅 상담 예약
+# ---------------------
 st.subheader("상담 예약을 원하시면 아래 정보를 선택해주세요.")
 start_date = date(2025, 1, 1)
 end_date = date(2025, 12, 31)
@@ -77,10 +80,7 @@ if prompt := st.chat_input("힘든 마음을 이야기하거나 상담 예약을
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # 예약 확정 처리 (간단한 예시)
-    if "예약 확정" in prompt and st.session_state.booking_info.get("date") and st.session_state.booking_info.get("time"):
-        st.success(f"{st.session_state.booking_info['date']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
-    else:
+    try:
         stream = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -93,6 +93,13 @@ if prompt := st.chat_input("힘든 마음을 이야기하거나 상담 예약을
         with st.chat_message("assistant"):
             response = st.write_stream(stream)
         st.session_state.messages.append({"role": "assistant", "content": response})
+
+        # 예약 확정 처리 (간단한 예시)
+        if "예약 확정" in prompt and st.session_state.booking_info.get("date") and st.session_state.booking_info.get("time"):
+            st.success(f"{st.session_state.booking_info['date']} {st.session_state.booking_info['time']}에 상담 예약이 완료되었습니다.") # 실제로는 예약 시스템과 연동 필요
+
+    except Exception as e:
+        st.error(f"챗봇 응답 중 오류가 발생했습니다: {e}")
 
 # 위험 상황 감지 및 안내 (예시)
 if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
