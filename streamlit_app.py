@@ -33,15 +33,6 @@ preferred_time = st.selectbox(
 )
 st.info(f"상담 비용은 1회에 5만원입니다.")
 
-# 선택된 예약 정보 저장 (예시)
-if "booking_info" not in st.session_state:
-    st.session_state.booking_info = {"date": None, "time": None}
-
-if preferred_date:
-    st.session_state.booking_info["date"] = preferred_date.strftime('%Y-%m-%d')
-if preferred_time != "선택 안 함":
-    st.session_state.booking_info["time"] = preferred_time
-
 # ---------------------
 # 💬 챗봇 대화 영역
 # ---------------------
