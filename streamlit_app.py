@@ -1,85 +1,81 @@
-# streamlit_app.py
-
 import streamlit as st
-from datetime import datetime, timedelta
 from openai import OpenAI
-import json
-import os
-import pandas as pd
 
-# ✅ OpenAI API 설정 (본인 API 키 입력)
-client = OpenAI(api_key="")
+# 제목 및 설명
+st.title("💬 yun's 월급 관리 Chatbot")
+st.image("chatbot_image.png", use_column_width=True)
+st.write(
+    "yun's 월급 관리 Chatbot은 월급과 목표 저축 금액을 기반으로 개인 맞춤형 재정 계획을 제시하고, "
+    "지출 항목을 하나씩 수정하면서 함께 조정해 나가는 대화형 챗봇입니다.\n"
+    "이 앱을 사용하려면 OpenAI API 키가 필요합니다."
+)
 
-# ✅ 페이지 설정
-st.set_page_config(page_title="하이닥봇 - 병원 예약 챗봇", page_icon="🤖", layout="centered")
+# OpenAI API 키 입력
+openai_api_key = st.text_input("OpenAI API Key", type="password")
+if not openai_api_key:
+    st.info("계속하려면 OpenAI API 키를 입력해주세요.", icon="🗝️")
+else:
+    client = OpenAI(api_key=openai_api_key)
 
-# ✅ 상단 로고 및 안내
-st.markdown("""
-<style>
-.title {
-    font-size: 38px;
-    font-weight: bold;
-    text-align: center;
-    color: #2C3E50;
-    margin-bottom: 10px;
-}
-.sub {
-    text-align: center;
-    font-size: 17px;
-    color: #7F8C8D;
-}
-.section {
-    margin-top: 30px;
-    padding: 20px;
-    border-radius: 12px;
-    background-color: #F9FAFB;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-</style>
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
+    if "initialized" not in st.session_state:
+        st.session_state.initialized = False
 
-<div class="title">🤖 하이닥봇</div>
-<div class="sub">병원 예약, 클릭 또는 말 한마디로 쉽게 완료하세요!</div>
-""", unsafe_allow_html=True)
+    if not st.session_state.initialized:
+        with st.form("salary_plan_form"):
+            salary = st.number_input("월급 (만원)", min_value=0)
+            goal_amount = st.number_input("목표 금액 (만원)", min_value=0)
+            years = st.number_input("몇 년 안에 모으고 싶은가요?", min_value=1)
+            submitted = st.form_submit_button("계획 요청")
 
-# ✅ 1. 자연어 기반 예약 요청
-예약GPT = {}  # 기본값 미리 초기화
+        if submitted:
+            prompt = (
+                f"My monthly salary is {salary}만원. I want to save {goal_amount}만원 in {years} years. "
+                "Please create a detailed monthly budget plan in Korean. The plan must include the following categories: "
+                "Please output the budget as a markdown table including the following categories: "
+                "저축 (savings), 식비 (food), 주거비 (housing), 교통비 (transportation), 보험 (insurance), 쇼핑 (shopping). "
+                "Respond in Korean and make it visually easy to understand."
+                "Make sure the plan is balanced and realistic to help achieve the savings goal. Respond in Korean."
+            )
 
-with st.expander("💬 자연어로 대화하며 예약하기", expanded=False):
-    if "step" not in st.session_state:
-        st.session_state.step = 0
-        st.session_state.예약정보 = {}
-        st.session_state.chat_history = []
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(f"월급: {salary}만원 / 목표: {goal_amount}만원 / 기간: {years}년")
 
-    user_input = st.chat_input("예: 치과요 → 이번 주 금요일 오전 10시요 → 홍길동, 010-1234-5678")
+            stream = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=st.session_state.messages,
+                stream=True,
+            )
+            with st.chat_message("assistant"):
+                response = st.write_stream(stream)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.session_state.initialized = True
+            st.rerun() 
+    else:
+        for message in st.session_state.messages:
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
 
-    for msg in st.session_state.chat_history:
-        st.chat_message(msg["role"]).write(msg["content"])
+        if prompt := st.chat_input("예: 식비를 30만원으로 바꾸고 싶어요"):
+            st.session_state.messages.append({"role": "user", "content": prompt})
+            with st.chat_message("user"):
+                st.markdown(prompt)
 
-    if user_input:
-        st.chat_message("user").write(user_input)
-        st.session_state.chat_history.append({"role": "user", "content": user_input})
+            system_message = {
+                "role": "system",
+                "content": (
+                    "You are a financial assistant chatbot. Continue the conversation in Korean, "
+                    "adjusting the budget based on the user's requests, and helping them achieve their savings goal."
+                )
+            }
 
-        step = st.session_state.step
-        info = st.session_state.예약정보
-
-        if step == 0:
-            info["진료과"] = user_input
-            msg = f"{user_input} 예약 좋습니다. 언제로 예약하시겠어요? (예: 4월 6일 오후 3시)"
-            st.session_state.step = 1
-
-        elif step == 1:
-            info["예약일시"] = user_input
-            msg = "예약자 성함과 연락처를 알려주세요. (예: 홍길동, 010-1234-5678)"
-            st.session_state.step = 2
-
-        elif step == 2:
-            try:
-                이름, 연락처 = [x.strip() for x in user_input.split(",")]
-                info["성함"] = 이름
-                info["연락처"] = 연락처
-
-                # 예약 저장
-                예약기록 = {
-                    "예약일시": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "진료과": info['진료과'],
-                    "예약날짜": info['예약일시'].split()[0] if ' ' in info['예약일시'] else info['예약일시'],
+            stream = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[system_message] + st.session_state.messages,
+                stream=True,
+            )
+            with st.chat_message("assistant"):
+                response = st.write_stream(stream)
+            st.session_state.messages.append({"role": "assistant", "content": response})
