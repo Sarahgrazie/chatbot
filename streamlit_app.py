@@ -1,72 +1,85 @@
+# streamlit_app.py
+
 import streamlit as st
-import os
+from datetime import datetime, timedelta
 from openai import OpenAI
+import json
+import os
+import pandas as pd
 
-# ---------------------
-# 🎯 챗봇 소개
-# ---------------------
+# ✅ OpenAI API 설정 (본인 API 키 입력)
+client = OpenAI(api_key="")
+
+# ✅ 페이지 설정
+st.set_page_config(page_title="하이닥봇 - 병원 예약 챗봇", page_icon="🤖", layout="centered")
+
+# ✅ 상단 로고 및 안내
 st.markdown("""
-### 💖 힘겨운 시간을 보내고 계신가요? **보듬이**가 당신의 마음을 보듬어 드릴게요. 💖
+<style>
+.title {
+    font-size: 38px;
+    font-weight: bold;
+    text-align: center;
+    color: #2C3E50;
+    margin-bottom: 10px;
+}
+.sub {
+    text-align: center;
+    font-size: 17px;
+    color: #7F8C8D;
+}
+.section {
+    margin-top: 30px;
+    padding: 20px;
+    border-radius: 12px;
+    background-color: #F9FAFB;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+</style>
 
-암 진단과 치료 과정에서 겪는 우울감은 혼자만의 문제가 아니에요. 많은 분들이 어려움을 느끼고 있으며, 적절한 이해와 지지가 있다면 충분히 극복할 수 있습니다.
+<div class="title">🤖 하이닥봇</div>
+<div class="sub">병원 예약, 클릭 또는 말 한마디로 쉽게 완료하세요!</div>
+""", unsafe_allow_html=True)
 
-이 챗봇은 당신의 감정을 이해하고, 필요한 정보와 도움을 드릴 수 있도록 만들어졌습니다. 편안하게 당신의 이야기를 들려주세요.
-""")
+# ✅ 1. 자연어 기반 예약 요청
+예약GPT = {}  # 기본값 미리 초기화
 
-# ---------------------
-# 🔑 API 키 입력
-# ---------------------
-openai_api_key = st.text_input("🔐 OpenAI API Key를 입력하세요", type="password")
-if not openai_api_key:
-    st.info("API 키를 입력하시면 챗봇을 사용할 수 있어요!", icon="🔑")
-    st.stop()
-else:
-    os.environ["OPENAI_API_KEY"] = openai_api_key
-    client = OpenAI()
+with st.expander("💬 자연어로 대화하며 예약하기", expanded=False):
+    if "step" not in st.session_state:
+        st.session_state.step = 0
+        st.session_state.예약정보 = {}
+        st.session_state.chat_history = []
 
-# ---------------------
-# 💬 이전 대화 불러오기
-# ---------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+    user_input = st.chat_input("예: 치과요 → 이번 주 금요일 오전 10시요 → 홍길동, 010-1234-5678")
 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+    for msg in st.session_state.chat_history:
+        st.chat_message(msg["role"]).write(msg["content"])
 
-# ---------------------
-# 💬 자유 질문 입력
-# ---------------------
-if prompt := st.chat_input("지금 당신의 기분이나 힘든 점을 이야기해주세요."):
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    if user_input:
+        st.chat_message("user").write(user_input)
+        st.session_state.chat_history.append({"role": "user", "content": user_input})
 
-    try:
-        stream = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ],
-            stream=True,
-        )
+        step = st.session_state.step
+        info = st.session_state.예약정보
 
-        with st.chat_message("assistant"):
-            response = st.write_stream(stream)
+        if step == 0:
+            info["진료과"] = user_input
+            msg = f"{user_input} 예약 좋습니다. 언제로 예약하시겠어요? (예: 4월 6일 오후 3시)"
+            st.session_state.step = 1
 
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        elif step == 1:
+            info["예약일시"] = user_input
+            msg = "예약자 성함과 연락처를 알려주세요. (예: 홍길동, 010-1234-5678)"
+            st.session_state.step = 2
 
-        # 추가적인 안내 또는 정보 제공 (예시)
-        if "힘들어요" in prompt or "우울해요" in prompt:
-            st.markdown("혼자가 아니에요. 많은 분들이 비슷한 감정을 느낍니다. 잠시 숨을 쉬고, 당신의 감정을 천천히 이야기해보세요.")
-            st.markdown("필요하다면 전문가의 도움을 받는 것도 좋은 방법입니다. 정신건강의학과 상담이나 심리 상담을 고려해보세요.")
-            st.markdown("**도움이 될 수 있는 연락처:**")
-            st.markdown("- 정신건강 상담전화: 1577-0199")
-            st.markdown("- 희망의 전화: 1393")
+        elif step == 2:
+            try:
+                이름, 연락처 = [x.strip() for x in user_input.split(",")]
+                info["성함"] = 이름
+                info["연락처"] = 연락처
 
-        elif "어떻게 해야 할지 모르겠어요" in prompt:
-            st.markdown("막막한 기분이 드시나요? 작은 것부터 시작해보는 건 어떨까요? 예를 들어, 따뜻한 물을 마시거나, 짧게 산책을 하는 것도 도움이 될 수 있습니다.")
-
-    except Exception as e:
-        st.error(f"에러가 발생했어요: {e}")
+                # 예약 저장
+                예약기록 = {
+                    "예약일시": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "진료과": info['진료과'],
+                    "예약날짜": info['예약일시'].split()[0] if ' ' in info['예약일시'] else info['예약일시'],
